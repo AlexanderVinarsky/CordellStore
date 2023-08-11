@@ -3,8 +3,8 @@ using Newtonsoft.Json;
 
 namespace MarketParser;
 
-public class Place {
-    public async Task<Root> GetPlace(string place, int count) {
+public static class Place {
+    public static async Task<Root> GetPlace(string place, int count) {
         try {
             var locationRequest =
                 $"https://search-maps.yandex.ru/v1/" +

@@ -1,4 +1,4 @@
 ﻿using MarketParser;
 
-var a = new Place().GetPlace("Оренбург Пятёрочка", 10);
-Console.WriteLine(a.Result.features[0].properties.CompanyMetaData.address);
+var a = Place.GetPlace("Москва долгопрудный продуктовый магазин", 50);
+CsvLoader.SaveData(a.Result, "test.csv");
