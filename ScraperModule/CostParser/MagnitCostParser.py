@@ -1,4 +1,9 @@
+import json
+from types import SimpleNamespace
+
 import requests
+
+from ScraperModule.CostParser.Objects.Goods import Goods
 
 headers = {
     'authority': 'web-gateway.middle-api.magnit.ru',
@@ -22,22 +27,30 @@ headers = {
     'x-platform-version': 'window.navigator.userAgent',
 }
 
-json_data = {
-    'categoryIDs': [],
-    'includeForAdults': True,
-    'onlyDiscount': False,
-    'order': 'desc',
-    'pagination': {
-        'number': 1,
-        'size': 36,
-    },
-    'shopType': '1',
-    'sortBy': 'price',
-    'storeCodes': [
-        '770178',
-    ],
-}
 
-response = requests.post('https://web-gateway.middle-api.magnit.ru/v3/goods', headers=headers, json=json_data)
+def parse_products(magnit_store):
+    json_data = {
+        'categoryIDs': [],
+        'includeForAdults': True,
+        'onlyDiscount': False,
+        'order': 'desc',
+        'pagination': {
+            'number': 1,
+            'size': 36,
+        },
+        'shopType': '1',
+        'sortBy': 'price',
+        'storeCodes': [
+            magnit_store.code,
+        ],
+    }
 
-print(response.text)
+    response = json.loads(requests.post('https://web-gateway.middle-api.magnit.ru/v3/goods', headers=headers,
+                                        json=json_data).text, object_hook=lambda d: SimpleNamespace(**d))
+
+    goods_list = []
+    for goods in response.goods:
+        goods_list.append(Goods(goods=goods))
+
+    return goods_list
+

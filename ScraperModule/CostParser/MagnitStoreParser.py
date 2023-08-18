@@ -1,4 +1,9 @@
+import json
+from types import SimpleNamespace
+
 import requests
+
+from ScraperModule.CostParser.Objects.MagnitStore import MagnitStore
 
 api_url = "https://web-gateway.uat.ya.magnit.ru/"
 base_url = {
@@ -6,8 +11,8 @@ base_url = {
 }
 
 
-def geolocation_coords(e, i):
-    i = f"?Latitude={e}&Longitude={i}&Radius=50&Limit=10"
+def get_near_magnit_stores(x, y, radius, count):
+    i = f"?Latitude={x}&Longitude={y}&Radius={radius}&Limit={count}"
     headers = {
         "x-platform-version": "window.navigator.userAgent",
         "x-device-id": "x5glri6mny",
@@ -17,16 +22,11 @@ def geolocation_coords(e, i):
         "x-client-name": "magnit"
     }
 
-    response = requests.get(base_url["getGeolocationCoords"] + i, headers=headers)
-    response.raise_for_status()
+    response = json.loads(requests.get(base_url["getGeolocationCoords"] + i,
+                                       headers=headers).text, object_hook=lambda d: SimpleNamespace(**d))
 
-    return response.json()
+    stores = []
+    for store in response.stores:
+        stores.append(MagnitStore(store=store))
 
-
-result = geolocation_coords(51.838167, 55.156713)
-print(result)
-
-
-
-
-
+    return stores
