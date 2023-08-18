@@ -1,7 +1,10 @@
-from ScraperModule.CostParser import MagnitCostParser, MagnitStoreParser, StorePlaceParser
+from ScraperModule.CostParser.ParserModules import MagnitCostParser, MagnitStoreParser, StorePlaceParser
 
 
-def Parse(place, goods_count=36, store_count=50):
+# Parse stores with goods near selected place.
+# Goods count - count of goods, that will be taken from store.
+# Store count - count of stores, that will be parsed near location
+def Parse(place, goods_count=36, store_count=50, search_radius=50):
     stores = []
 
     # Get stores by yandex API
@@ -9,7 +12,7 @@ def Parse(place, goods_count=36, store_count=50):
         store_goods = []
         for current_good in MagnitCostParser.parse_products(
                 # Get magnit stores near cords, that was taken from yandex API
-                MagnitStoreParser.get_near_magnit_stores(store.x_coordinate, store.y_coordinate, 50, 1)[0], goods_count):
+                MagnitStoreParser.get_near_magnit_stores(store.x_coordinate, store.y_coordinate, search_radius, 1)[0], goods_count):
             store_goods.append(current_good)
 
         store.storage = store_goods
@@ -18,6 +21,7 @@ def Parse(place, goods_count=36, store_count=50):
     return stores
 
 
+# Get average prices from all goods
 def AveragePrices(stores):
     average_goods = []
     for store in stores:
@@ -35,5 +39,5 @@ def AveragePrices(stores):
 
 
 # Example of using
-for product in AveragePrices(Parse("Оренбург Прострорная Магнит", 200, 50)):
+for product in AveragePrices(Parse("Оренбург Прострорная Магнит", goods_count=200, store_count=50)):
     print(str(product.name) + " " + str(product.price))

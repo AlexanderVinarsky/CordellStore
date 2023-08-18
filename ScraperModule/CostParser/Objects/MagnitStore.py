@@ -2,6 +2,8 @@ from ScraperModule.CostParser.Objects.Store import Store
 
 
 class MagnitStore(Store):
+    storage = []
+
     def __init__(self, store):
         super().__init__(None)
         self.name = "Магнит"

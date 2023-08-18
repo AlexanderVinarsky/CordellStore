@@ -15,7 +15,7 @@ def get_near_magnit_stores(x, y, radius, count):
     i = f"?Latitude={x}&Longitude={y}&Radius={radius}&Limit={count}"
     headers = {
         "x-platform-version": "window.navigator.userAgent",
-        "x-device-id": "x5glri6mny",
+        "x-device-id": "device_id",
         "x-device-tag": "disabled",
         "x-app-version": "0.1.0",
         "x-device-platform": "Web",

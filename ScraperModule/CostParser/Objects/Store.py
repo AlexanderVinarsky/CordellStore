@@ -1,6 +1,4 @@
 class Store:
-    storage = []
-
     def __init__(self, feature):
         if feature is not None:
             self.name = feature.properties.name
