@@ -39,5 +39,5 @@ def AveragePrices(stores):
 
 
 # Example of using
-#for product in AveragePrices(Parse("Оренбург", goods_count=1, store_count=50)):
-    #print(str(product.name) + " " + str(product.price))
+for product in AveragePrices(Parse("Долгопрудный Магнит", goods_count=1, store_count=50)):
+    print(str(product.name) + " " + str(product.price))

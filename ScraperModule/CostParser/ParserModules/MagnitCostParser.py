@@ -48,9 +48,12 @@ def parse_products(magnit_store, goods_count):
     response = json.loads(requests.post('https://web-gateway.middle-api.magnit.ru/v3/goods', headers=headers,
                                         json=json_data).text, object_hook=lambda d: SimpleNamespace(**d))
 
-    goods_list = []
-    for goods in response.goods:
-        goods_list.append(Goods(goods=goods))
+    try:
+        goods_list = []
+        for goods in response.goods:
+            goods_list.append(Goods(goods=goods))
 
-    return goods_list
-
+        return goods_list
+    except Exception as e:
+        print("error")
+        return [Goods(None)]
