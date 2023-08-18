@@ -28,7 +28,7 @@ headers = {
 }
 
 
-def parse_products(magnit_store):
+def parse_products(magnit_store, goods_count):
     json_data = {
         'categoryIDs': [],
         'includeForAdults': True,
@@ -36,7 +36,7 @@ def parse_products(magnit_store):
         'order': 'desc',
         'pagination': {
             'number': 1,
-            'size': 36,
+            'size': goods_count,
         },
         'shopType': '1',
         'sortBy': 'price',
