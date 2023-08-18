@@ -16,3 +16,4 @@ def parse_near_stores(place, count):
         stores.append(Store(feature=store))
 
     return stores
+
