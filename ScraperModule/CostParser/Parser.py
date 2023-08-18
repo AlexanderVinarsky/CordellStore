@@ -1,14 +1,14 @@
-import re
-
 from ScraperModule.CostParser import MagnitCostParser, MagnitStoreParser, StorePlaceParser
 
 
 def Parse(place, goods_count=36, store_count=50):
     stores = []
 
+    # Get stores by yandex API
     for store in StorePlaceParser.parse_near_stores(place, store_count):
         store_goods = []
         for current_good in MagnitCostParser.parse_products(
+                # Get magnit stores near cords, that was taken from yandex API
                 MagnitStoreParser.get_near_magnit_stores(store.x_coordinate, store.y_coordinate, 50, 1)[0], goods_count):
             store_goods.append(current_good)
 
