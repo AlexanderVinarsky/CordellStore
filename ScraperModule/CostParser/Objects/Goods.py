@@ -1,3 +1,6 @@
+import json
+
+
 class Goods:
     def __init__(self, goods):
         if goods is not None:
@@ -14,3 +17,7 @@ class Goods:
             self.id = 0
             self.name = ''
             self.price = 0
+
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__,
+                          sort_keys=True, indent=4)
