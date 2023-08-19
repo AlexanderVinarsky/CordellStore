@@ -38,6 +38,36 @@ def AveragePrices(stores):
     return average_goods
 
 
+def PriceScattering(places_stores):
+    names = []
+    max_price = []
+    min_price = []
+
+    for stores in places_stores:
+        for products in AveragePrices(stores):
+            for i in range(len(names)):
+                if names[i] == products.name:
+                    if max_price[i] <= products.price:
+                        max_price[i] = products.price
+                    if min_price[i] >= products.price:
+                        min_price[i] = products.price
+                else:
+                    names.append(products.name)
+                    min_price.append(products.price)
+                    max_price.append(products.price)
+
+    return [names, min_price, max_price]
+
+
 # Example of using
-for product in AveragePrices(Parse("Долгопрудный Магнит", goods_count=1, store_count=50)):
-    print(str(product.name) + " " + str(product.price))
+# for product in AveragePrices(Parse("Долгопрудный Магнит", goods_count=1, store_count=50)):
+    # print(str(product.name) + " " + str(product.price))
+
+# Example of using
+places = ["Оренбург Магнит", "Долгопрудный Магнит", "Якутск Магнит", "Краснодар Магнит", "Омск Магнит"]
+answers = []
+for place in places:
+    answers.append(Parse(place, goods_count=200, store_count=50))
+
+scattering = PriceScattering(answers)
+print(scattering)
