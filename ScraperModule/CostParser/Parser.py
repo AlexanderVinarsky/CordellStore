@@ -45,16 +45,19 @@ def PriceScattering(places_stores):
 
     for stores in places_stores:
         for products in AveragePrices(stores):
+            price = float(str(products.price).replace(",", "."))
+
             for i in range(len(names)):
                 if names[i] == products.name:
-                    if max_price[i] <= products.price:
-                        max_price[i] = products.price
-                    if min_price[i] >= products.price:
-                        min_price[i] = products.price
-                else:
-                    names.append(products.name)
-                    min_price.append(products.price)
-                    max_price.append(products.price)
+                    if max_price[i] <= price:
+                        max_price[i] = price
+                    if min_price[i] >= price:
+                        min_price[i] = price
+                    break
+            else:
+                names.append(products.name)
+                min_price.append(price)
+                max_price.append(price)
 
     return [names, min_price, max_price]
 
@@ -64,10 +67,12 @@ def PriceScattering(places_stores):
     # print(str(product.name) + " " + str(product.price))
 
 # Example of using
-places = ["Оренбург Магнит", "Долгопрудный Магнит", "Якутск Магнит", "Краснодар Магнит", "Омск Магнит"]
+places = ["Оренбург Магнит", "Долгопрудный Магнит"]
 answers = []
 for place in places:
     answers.append(Parse(place, goods_count=200, store_count=50))
 
 scattering = PriceScattering(answers)
-print(scattering)
+
+for i in range(len(scattering[0])):
+    print(str(scattering[0][i]) + ": " + str(scattering[1][i]) + " -> " + str(scattering[2][i]))
