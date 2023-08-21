@@ -21,11 +21,14 @@ def get_near_magnit_stores(x, y, radius, count):
     response = json.loads(requests.get("https://web-gateway.uat.ya.magnit.ru/v1/geolocation/store" + i,
                                        headers=headers).text, object_hook=lambda d: SimpleNamespace(**d))
 
-    stores = []
-    for store in response.stores:
-        stores.append(MagnitStore(store=store))
+    try:
+        stores = []
+        for store in response.stores:
+            stores.append(MagnitStore(store=store))
 
-    return stores
+        return stores
+    except Exception as e:
+        return [MagnitStore(None)]
 
 
 def parse_products(magnit_store, goods_count):
@@ -77,5 +80,4 @@ def parse_products(magnit_store, goods_count):
 
         return goods_list
     except Exception as e:
-        print("error")
         return [Goods(None)]
