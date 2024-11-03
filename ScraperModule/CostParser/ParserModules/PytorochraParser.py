@@ -7,7 +7,7 @@ import requests
 from ScraperModule.CostParser.Objects.Goods import Goods
 from ScraperModule.CostParser.Objects.PyatorochkaStore import PyatorochkaStore
 
-stores_url = "https://5ka.ru/api/v3/stores/in-area"
+stores_url = "https://5d.5ka.ru/api/v3/stores/in-area"
 products_url = "https://5ka.ru/api/v2/special_offers/"
 
 

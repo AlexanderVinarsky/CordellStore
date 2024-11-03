@@ -24,3 +24,10 @@ class Store:
             return None
 
         return stores
+    
+    def to_json(self) -> dict:
+        return {
+            'name': self.name,
+            'lat': self.x_coordinate,
+            'lon': self.y_coordinate
+        }
