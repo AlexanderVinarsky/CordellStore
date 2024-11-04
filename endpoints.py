@@ -3,16 +3,26 @@ from fastapi_redis_cache import cache
 
 from scrapper.objects.store import Store
 from scrapper.objects.magnit.magnit import MagnitStore
+from scrapper.objects.common import get_coordinates_by_address
 
 
-@app.get("/geo:get_coordinates")
+@app.get("/geo:get_coordinates:near_shops")
 @cache(expire=86400)
-async def _get_coordinates(address: str, limit: int = 1) -> list:
+async def _get_shop_coordinates(address: str, limit: int = 1) -> list:
     stores: list[dict] = [x.to_json() for x in Store.parse_near_stores(address)[:limit]]
     return stores
 
 
-@app.get("shop:get_products")
+@app.get("/geo:get_coordinates:by_querry")
+@cache(expire=86400)
+async def _get_coordinates(address: str) -> list:
+    lat, lon = get_coordinates_by_address(address)
+    return {
+        'data': [ lat, lon ]
+    }
+
+
+@app.get("/shop:get_products")
 @cache(expire=86400)
 async def _get_products(lat: float, lon: float, shop_type: str = "magnit") -> list:
     if shop_type == "magnit":
@@ -65,6 +75,8 @@ async def _get_heatmap(
             p["normalized_price"] = 1.0 
     else:
         for p in product_data:
-            p["normalized_price"] = (p["price"] - min_price) / (max_price - min_price)
+            p["normalized_price"] = max((p["price"] - min_price) / (max_price - min_price), 1)
 
-    return [{"lat": p["lat"], "lon": p["lon"], "normalized_price": p["normalized_price"]} for p in product_data]
+    return {
+        'data': [{"lat": p["lat"], "lon": p["lon"], "intensity": p["normalized_price"] * 100} for p in product_data]
+    }
