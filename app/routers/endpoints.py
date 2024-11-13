@@ -1,4 +1,4 @@
-from api import app
+from app.main import app
 from fastapi_redis_cache import cache
 
 from scrapper.objects.store import Store
