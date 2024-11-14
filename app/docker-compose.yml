@@ -2,9 +2,9 @@ version: '3.8'
 
 services:
   app:
-    build: .
+    image: cordell_stores:latest
     ports:
-      - "8000:8000"
+      - "5000:5000"
     environment:
       - REDIS_URL=redis://redis:6379
     depends_on:

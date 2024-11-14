@@ -4,11 +4,15 @@ from OSMPythonTools.nominatim import Nominatim
 
 def get_coordinates_by_address(address: str) -> Optional[Tuple[float, float]]:
     nominatim = Nominatim()
-    result = nominatim.query(address)
+    result: OSMPythonTools.nominatim.NominatimResult = nominatim.query(address)
     
     if result is not None:
-        lat = result.latitude
-        lon = result.longitude
+        if len(result.toJSON()) < 0:
+            return None
+        
+        json_data: dict = result.toJSON()[0]
+        lat = json_data.get("lat", 0.0)
+        lon = json_data.get("lon", 0.0)
         return lat, lon
     else:
         return None
