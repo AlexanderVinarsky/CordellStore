@@ -1,3 +1,6 @@
+import OSMPythonTools
+import OSMPythonTools.nominatim
+
 from typing import Optional, Tuple
 from OSMPythonTools.nominatim import Nominatim
 

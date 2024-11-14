@@ -60,19 +60,12 @@ async def _get_products(lat: float, lon: float, shop_type: str = "magnit") -> di
 
 @app.get("/heatmap:get")
 async def _get_heatmap(
-    upper_bound: tuple[float, float],
-    lower_bound: tuple[float, float],
+    center_lat: float,
+    center_lon: float,
+    radius: float,
     product: str,
     shop_type: str = "magnit"
 ) -> dict:
-    center_lat = (upper_bound[0] + lower_bound[0]) / 2
-    center_lon = (upper_bound[1] + lower_bound[1]) / 2
-    
-    radius = max(
-        abs(upper_bound[0] - center_lat),
-        abs(upper_bound[1] - center_lon)
-    )
-    
     if shop_type == "magnit":
         stores: list[Store] = MagnitStore.get_near_magnit_stores(center_lat, center_lon, radius)
 
