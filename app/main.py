@@ -1,8 +1,9 @@
 import os
+import redis
+import pickle
 
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi_redis_cache import FastApiRedisCache, cache
-from fastapi import FastAPI, status, Request, Response, HTTPException
 
 from scrapper.objects.store import Store
 from scrapper.objects.magnit.magnit import MagnitStore
@@ -10,7 +11,7 @@ from scrapper.objects.common import get_coordinates_by_address
 
 
 app = FastAPI()
-LOCAL_REDIS_URL = "redis://127.0.0.1:6379"
+rd = redis.Redis(host="app-redis-1", port=6379, db=0)
 
 app.add_middleware(
     CORSMiddleware,
@@ -19,39 +20,47 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
-
-@app.on_event("startup")
-def startup():
-    redis_cache = FastApiRedisCache()
-    redis_cache.init(
-        host_url=os.environ.get("REDIS_URL", LOCAL_REDIS_URL),
-        prefix="api-cache",
-        response_header="X-API-Cache",
-        ignore_arg_types=[Request, Response]
-    )
     
 
 @app.get("/geo/get_coordinates/near_shops")
 async def _get_shop_coordinates(address: str, limit: int = 1) -> dict:
-    return {
+    cached_data = rd.get(f"0{address}{limit}")
+    if cached_data:
+        return pickle.loads(cached_data)
+    
+    data: dict = {
         "data": [x.to_json() for x in Store.parse_near_stores(address)[:limit]]
     }
+    
+    rd.set(f"{address}{limit}", pickle.dumps(data))
+    return data
 
 
 @app.get("/geo/get_coordinates/by_querry")
 async def _get_coordinates(address: str) -> dict:
+    cached_data = rd.get(f"1{address}")
+    if cached_data:
+        return pickle.loads(cached_data)
+    
     coordinates = get_coordinates_by_address(address)
     if coordinates is None:
         raise HTTPException(status_code=404, detail="Coordinates not found")
     
     lat, lon = coordinates
-    return {
+    data = {
         "data": [ round(float(lat), 2), round(float(lon), 2) ]
     }
+    
+    rd.set(f"1{address}", pickle.dumps(data))
+    return data
 
 
 @app.get("/shop/get_products")
 async def _get_products(lat: float, lon: float, shop_type: str = "magnit") -> dict:
+    cached_data = rd.get(f"2{lat}{lon}{shop_type}")
+    if cached_data:
+        return pickle.loads(cached_data)
+    
     if shop_type == "magnit":
         try:
             store: Store = MagnitStore.get_near_magnit_stores(lat, lon, .02)[-1]
@@ -61,9 +70,12 @@ async def _get_products(lat: float, lon: float, shop_type: str = "magnit") -> di
     if len(store.storage) == 0:
         raise HTTPException(status_code=400, detail="No products in store!")
 
-    return {
+    data = {
         "data": [ x.to_json() for x in store.storage ]
     }
+    
+    rd.set(f"2{lat}{lon}{shop_type}", pickle.dumps(data))
+    return data
 
 
 @app.get("/heatmap/get")
@@ -75,8 +87,14 @@ async def _get_heatmap(
     shop_type: str = "magnit",
     shops_limit: int = 5
 ) -> dict:
+    cached_data = rd.get(f"3{center_lat}{center_lon}{radius}{product}{shop_type}{shops_limit}")
+    if cached_data:
+        return pickle.loads(cached_data)
+    
     if shop_type == "magnit":
-        stores: list[Store] = MagnitStore.get_near_magnit_stores(center_lat, center_lon, radius, shops_limit)
+        stores: list[Store] = await MagnitStore.get_near_magnit_stores(center_lat, center_lon, radius, shops_limit)
+    elif shop_type == "lenta":
+        pass
 
     product_data = []
     for store in stores:
@@ -102,6 +120,9 @@ async def _get_heatmap(
         for p in product_data:
             p["normalized_price"] = max((p["price"] - min_price) / (max_price - min_price), 1)
 
-    return {
+    data = {
         "data": [{"lat": p["lat"], "lng": p["lon"], "intensity": p["normalized_price"] * 100} for p in product_data]
     }
+    
+    rd.set(f"3{center_lat}{center_lon}{radius}{product}{shop_type}{shops_limit}", pickle.dumps(data))
+    return data

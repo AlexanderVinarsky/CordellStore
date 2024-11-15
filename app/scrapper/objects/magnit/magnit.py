@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import httpx
 import requests
 
 from scrapper.objects.product import Product
@@ -84,21 +85,21 @@ class MagnitStore(Store):
         return goods_list
 
     @staticmethod
-    def load_magnit_stores(
+    async def load_magnit_stores(
         place: str = None, lon: float = None, lat: float = None, store_count: int = 50, search_radius: int = 5
     ) -> list[MagnitStore]:
         
         stores = []
         if place is not None:
             for store in Store.parse_near_stores(place)[:store_count]:
-                stores.extend(MagnitStore.get_near_magnit_stores(store.y_coordinate, store.x_coordinate, search_radius, 1))
+                stores.extend(await MagnitStore.get_near_magnit_stores(store.y_coordinate, store.x_coordinate, search_radius, 1))
         else:
-            stores.extend(MagnitStore.get_near_magnit_stores(lat, lon, search_radius, 1))
+            stores.extend(await MagnitStore.get_near_magnit_stores(lat, lon, search_radius, 1))
 
         return stores
 
     @staticmethod
-    def get_near_magnit_stores(x: float, y: float, radius: float = .02, count: int = 1) -> list[MagnitStore]:
+    async def get_near_magnit_stores(lat: float, lon: float, radius: float = .02, count: int = 1) -> list[MagnitStore]:
         cookies = {
             '_ga': 'GA1.1.860917445.1730309330',
             '_ym_uid': '1730309331268901850',
@@ -140,10 +141,10 @@ class MagnitStore(Store):
         json_data = {
             'aggs': False,
             'geoBoundingBox': {
-                'leftTopLatitude': x + radius,
-                'leftTopLongitude': y - radius,
-                'rightBottomLatitude': x - radius,
-                'rightBottomLongitude': y + radius,
+                'leftTopLatitude': lat + radius,
+                'leftTopLongitude': lon - radius,
+                'rightBottomLatitude': lat - radius,
+                'rightBottomLongitude': lon + radius,
             },
             'limit': count,
             'storeTypes': [
@@ -154,11 +155,15 @@ class MagnitStore(Store):
             ],
         }
 
-        stores = []
-        response = requests.post('https://magnit.ru/webgate/v1/store-search/geo', json=json_data, cookies=cookies, headers=headers)
-        if response.status_code == 200:
-            stores_response: list = response.json().get('stores', [])
-            for store in stores_response:
-                stores.append(MagnitStore(store=store))
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                'https://magnit.ru/webgate/v1/store-search/geo',
+                json=json_data,
+                cookies=cookies,
+                headers=headers
+            )
+            if response.status_code == 200:
+                stores_response: list = response.json().get('stores', [])
+                return [MagnitStore(store=store) for store in stores_response]
 
-        return stores
+        return []

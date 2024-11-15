@@ -3,3 +3,4 @@ uvicorn
 fastapi-redis-cache
 OSMPythonTools
 requests
+httpx
