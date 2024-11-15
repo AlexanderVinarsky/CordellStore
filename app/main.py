@@ -1,5 +1,6 @@
 import os
 
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi_redis_cache import FastApiRedisCache, cache
 from fastapi import FastAPI, status, Request, Response, HTTPException
 
@@ -11,6 +12,13 @@ from scrapper.objects.common import get_coordinates_by_address
 app = FastAPI()
 LOCAL_REDIS_URL = "redis://127.0.0.1:6379"
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 @app.on_event("startup")
 def startup():
@@ -23,14 +31,14 @@ def startup():
     )
     
 
-@app.get("/geo:get_coordinates:near_shops")
+@app.get("/geo/get_coordinates/near_shops")
 async def _get_shop_coordinates(address: str, limit: int = 1) -> dict:
     return {
         "data": [x.to_json() for x in Store.parse_near_stores(address)[:limit]]
     }
 
 
-@app.get("/geo:get_coordinates:by_querry")
+@app.get("/geo/get_coordinates/by_querry")
 async def _get_coordinates(address: str) -> dict:
     coordinates = get_coordinates_by_address(address)
     if coordinates is None:
@@ -42,7 +50,7 @@ async def _get_coordinates(address: str) -> dict:
     }
 
 
-@app.get("/shop:get_products")
+@app.get("/shop/get_products")
 async def _get_products(lat: float, lon: float, shop_type: str = "magnit") -> dict:
     if shop_type == "magnit":
         try:
@@ -58,16 +66,17 @@ async def _get_products(lat: float, lon: float, shop_type: str = "magnit") -> di
     }
 
 
-@app.get("/heatmap:get")
+@app.get("/heatmap/get")
 async def _get_heatmap(
     center_lat: float,
     center_lon: float,
     radius: float,
     product: str,
-    shop_type: str = "magnit"
+    shop_type: str = "magnit",
+    shops_limit: int = 5
 ) -> dict:
     if shop_type == "magnit":
-        stores: list[Store] = MagnitStore.get_near_magnit_stores(center_lat, center_lon, radius)
+        stores: list[Store] = MagnitStore.get_near_magnit_stores(center_lat, center_lon, radius, shops_limit)
 
     product_data = []
     for store in stores:
@@ -94,5 +103,5 @@ async def _get_heatmap(
             p["normalized_price"] = max((p["price"] - min_price) / (max_price - min_price), 1)
 
     return {
-        "data": [{"lat": p["lat"], "lon": p["lon"], "intensity": p["normalized_price"] * 100} for p in product_data]
+        "data": [{"lat": p["lat"], "lng": p["lon"], "intensity": p["normalized_price"] * 100} for p in product_data]
     }

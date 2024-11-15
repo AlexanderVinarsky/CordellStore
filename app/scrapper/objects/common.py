@@ -10,7 +10,7 @@ def get_coordinates_by_address(address: str) -> Optional[Tuple[float, float]]:
     result: OSMPythonTools.nominatim.NominatimResult = nominatim.query(address)
     
     if result is not None:
-        if len(result.toJSON()) < 0:
+        if len(result.toJSON()) == 0:
             return None
         
         json_data: dict = result.toJSON()[0]
