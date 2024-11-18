@@ -2,6 +2,8 @@ import os
 import redis
 import pickle
 
+from rapidfuzz import fuzz
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -63,7 +65,8 @@ async def _get_products(lat: float, lon: float, shop_type: str = "magnit") -> di
     
     if shop_type == "magnit":
         try:
-            store: Store = await MagnitStore.get_near_magnit_stores(lat, lon, .02)[-1]
+            stores: list[Store] = await MagnitStore.get_near_magnit_stores(lat, lon, .02)
+            store: Store = stores[-1]
         except Exception as ex:
             raise HTTPException(status_code=500, detail="Index error") from ex
 
@@ -99,7 +102,7 @@ async def _get_heatmap(
     product_data = []
     for store in stores:
         for item in store.storage:
-            if item.name == product:
+            if fuzz.partial_ratio(item.name.lower(), product.lower()) > 75:
                 product_data.append({
                     "lat": store.x_coordinate,
                     "lon": store.y_coordinate,
