@@ -1,4 +1,3 @@
-import os
 import redis
 import pickle
 
@@ -22,7 +21,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
-    
+
 
 @app.get("/geo/get_coordinates/near_shops")
 async def _get_shop_coordinates(address: str, limit: int = 1) -> dict:
@@ -30,10 +29,13 @@ async def _get_shop_coordinates(address: str, limit: int = 1) -> dict:
     if cached_data:
         return pickle.loads(cached_data)
     
-    data: dict = {
-        "data": [x.to_json() for x in Store.parse_near_stores(address)[:limit]]
-    }
-    
+    try:
+        data: dict = {
+            "data": [x.to_json() for x in Store.parse_near_stores(address)[:limit]]
+        }
+    except Exception as ex:
+        raise HTTPException(status_code=500, detail="_get_shop_coordinates: Parsing error") from ex
+
     rd.set(f"{address}{limit}", pickle.dumps(data))
     return data
 
@@ -46,7 +48,7 @@ async def _get_coordinates(address: str) -> dict:
     
     coordinates = get_coordinates_by_address(address)
     if coordinates is None:
-        raise HTTPException(status_code=404, detail="Coordinates not found")
+        raise HTTPException(status_code=404, detail="_get_coordinates: Coordinates not found")
     
     lat, lon = coordinates
     data = {
@@ -68,10 +70,10 @@ async def _get_products(lat: float, lon: float, shop_type: str = "magnit") -> di
             stores: list[Store] = await MagnitStore.get_near_magnit_stores(lat, lon, .02)
             store: Store = stores[-1]
         except Exception as ex:
-            raise HTTPException(status_code=500, detail="Index error") from ex
+            raise HTTPException(status_code=500, detail="get_near_magnit_stores: Index error") from ex
 
     if len(store.storage) == 0:
-        raise HTTPException(status_code=400, detail="No products in store!")
+        raise HTTPException(status_code=400, detail="_get_products: No products in store!")
 
     data = {
         "data": [ x.to_json() for x in store.storage ]
@@ -98,6 +100,8 @@ async def _get_heatmap(
         stores: list[Store] = await MagnitStore.get_near_magnit_stores(center_lat, center_lon, radius, shops_limit)
     elif shop_type == "lenta":
         pass
+    else:
+        raise HTTPException(status_code=404, detail="_get_heatmap: Shop type not supported")
 
     product_data = []
     for store in stores:
