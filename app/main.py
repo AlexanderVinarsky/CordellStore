@@ -63,7 +63,7 @@ async def _get_products(lat: float, lon: float, shop_type: str = "magnit") -> di
     
     if shop_type == "magnit":
         try:
-            store: Store = MagnitStore.get_near_magnit_stores(lat, lon, .02)[-1]
+            store: Store = await MagnitStore.get_near_magnit_stores(lat, lon, .02)[-1]
         except Exception as ex:
             raise HTTPException(status_code=500, detail="Index error") from ex
 
